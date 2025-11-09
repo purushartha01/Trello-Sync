@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+:root {
+    --main-bg-color: #0c1f2f;
+  --board-bg-color: conic-gradient(
+    from 45deg at -5% 40%,
+    #419eef 0%,
+    #00f2fe 50% 70%,
+    #419eef 90%
+  );
+  --card-bg-color: rgba(51, 51, 51, 0.8);
+  --text-color: white;
+  --accent-color: rgba(27, 83, 133, 0.7);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  background: var(--main-bg-color);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+  height: 100dvh;
+  width: 100dvw;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+  display: flex;
+}
+
+.side-panel-container {
+  display: none;
+}
+
+.board-container {
+  height: 100%;
+  width: 100%;
+  display: grid;
+  grid-template-rows: 70px 1fr;
+  background: var(--board-bg-color);
+}
+
+.tool-bar {
+  background: var(--accent-color);
+  color: var(--text-color);
+  display: grid;
+  grid-template-columns: 2fr 1fr 3fr;
+}
+
+.tasks-container{
+  padding: 1rem;
+  overflow-y: auto;
+}
