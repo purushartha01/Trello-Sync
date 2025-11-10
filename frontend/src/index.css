@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 :root {
-    --main-bg-color: #0c1f2f;
+  --main-bg-color: #0c1f2f;
   --board-bg-color: conic-gradient(
     from 45deg at -5% 40%,
     #419eef 0%,
     #00f2fe 50% 70%,
     #419eef 90%
   );
-  --card-bg-color: rgba(51, 51, 51, 0.8);
+  --card-bg-color: rgb(16, 18, 4);
   --text-color: white;
   --accent-color: rgba(27, 83, 133, 0.7);
 }
@@ -49,10 +49,41 @@ body {
   background: var(--accent-color);
   color: var(--text-color);
   display: grid;
-  grid-template-columns: 2fr 1fr 3fr;
+  grid-template-columns: 3fr 2fr;
 }
 
-.tasks-container{
-  padding: 1rem;
+.tasks-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 1rem 2rem;
   overflow-y: auto;
+}
+
+.board-list-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 130px;
+  background: var(--card-bg-color);
+  color: var(--text-color);
+  border-radius: 1rem;
+}
+
+.list-header {
+  height: 50px;
+  border-bottom: 1px solid var(--text-color);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.action-container{
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+}
+
+.list-content {
+  min-height: 80px;
 }
