@@ -37,14 +37,15 @@ const ChangeViewWidget = () => {
           }
         }
         ref={iconRef}
+        title="Change View"
       >
 
-        <ChangeView className="h-9 aspect-square outline-none"
+        <ChangeView className="h-9 aspect-square outline-none cursor-pointer"
         />
       </span>
 
       <div
-        className={`${isMenuVisible ? 'flex' : 'hidden'} flex-col absolute top-[calc(100%+4px)] right-0 bg-white text-gray-800 w-[120px] max-h-[20dvh] border rounded-sm py-2`}
+        className={`${isMenuVisible ? 'flex' : 'hidden'} flex-col absolute top-[calc(100%+4px)] right-0 bg-white text-gray-800 w-[120px] max-h-[20dvh] border rounded-sm py-2 z-50`}
         ref={menuRef}
       >
         <span className="flex flex-row" onClick={() => { console.log("Grid View clicked"); setIsMenuVisible(false); }}>
