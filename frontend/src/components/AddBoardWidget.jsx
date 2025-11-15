@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { AddTaskCard } from "../utility/Icons"
 import { serverAxiosInstance } from "../utility/axiosConfig";
+import { toast } from 'sonner';
+import { Spinner } from "./Widgets";
 
 
 const AddBoardWidget = () => {
@@ -18,15 +20,30 @@ const AddBoardWidget = () => {
     if (!newBoardName.trim()) {
       console.error("Board name cannot be empty.");
       setIsCreating(false);
+      toast.error("Board name cannot be empty.", {
+        duration: 2000, cancel: {
+          label: "Dismiss"
+        }
+      });
       return;
     }
     serverAxiosInstance.post("/boards", { name: newBoardName, desc: newBoardDescription, defaultLists: shouldCreateDefaultLists }).then((res) => {
-      console.log("New board created:", res.data);
+      // console.log("New board created:", res.data);
+      toast.success("Board created successfully!", {
+        duration: 2000, cancel: {
+          label: "Dismiss"
+        }
+      });
       setIsMenuVisible(false);
       setNewBoardName("");
       setNewBoardDescription("");
     }).catch((err) => {
-      console.error("Error creating new board:", err);
+      // console.error("Error creating new board:", err);
+      toast.error("Failed to create board. Please try again.", {
+        duration: 2000, cancel: {
+          label: "Dismiss"
+        }
+      });
     }).finally(() => {
       setIsCreating(false);
     });
@@ -39,6 +56,7 @@ const AddBoardWidget = () => {
         return;
       }
     }
+
     if (isMenuVisible) {
       document.addEventListener("mousedown", handleOutsideClick);
     }
@@ -94,9 +112,7 @@ const AddBoardWidget = () => {
             }}
             disabled={isCreating || !newBoardName.trim()}
           >
-            {isCreating ? <span className="h-4 w-4 border-2 rounded-full animate-spin border-t-transparent border-white">
-
-            </span> :
+            {isCreating ? <Spinner classes={"border-white h-8"} /> :
               <span>
                 Create Board
               </span>

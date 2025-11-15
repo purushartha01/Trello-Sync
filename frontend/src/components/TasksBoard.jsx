@@ -8,7 +8,8 @@ import AddListWidget from "./AddListWidget.jsx";
 import useSocket from './../hooks/useSocket';
 import { DataContext } from "../context/DataContext.jsx";
 import { handleBoardLevelEvents, handleCardLevelEvents, handleListLevelEvents } from "../utility/webSocketEventsManager.js";
-
+import { toast } from "sonner";
+import { Spinner } from "./Widgets.jsx";
 
 
 const TasksBoard = () => {
@@ -66,9 +67,21 @@ const TasksBoard = () => {
                     ).length <= 0) {
                         contextUpdateCurrentBoard(res.data.userBoards[0]?.id || "");
                     }
+                    toast.success("Boards updated successfully from server.", {
+                        duration: 2000,
+                        cancel: {
+                            label: "Dismiss"
+                        }
+                    });
                 })
                 .catch((err) => {
                     console.error("Error fetching user boards:", err);
+                    toast.error("Failed to fetch boards from server.", {
+                        cancel: {
+                            label: "Dismiss"
+                        },
+                        duration: 2000,
+                    });
                 }).finally(() => {
                     setIsLoading(false);
                 });
@@ -88,7 +101,7 @@ const TasksBoard = () => {
                 </div>
             </div>
             <div className="tasks-container">
-                {isLoading ? (<div></div>)
+                {isLoading ? (<Spinner classes={"border-white h-8"} />)
                     : (listsForBoard?.length === 0 ? <div>No lists available.</div> : listsForBoard?.map((list) => {
                         {/* Tasks will be rendered here */ }
                         return (

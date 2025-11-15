@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { AddToListIcon, DeleteIcon, EditListItemIcon, EllipsisIcon, EllipsisVerticalIcon, PencilIcon } from "./../utility/Icons";
 import { useState, useEffect } from "react";
 import { serverAxiosInstance } from "../utility/axiosConfig";
-
+import { Spinner } from "./Widgets"
 
 const ContextMenu = ({ isListItem = false, isList = false, isBoard = false, itemRef, item, onEdit }) => {
 
@@ -10,6 +10,7 @@ const ContextMenu = ({ isListItem = false, isList = false, isBoard = false, item
     const [isCompletionProcessing, setIsCompletionProcessing] = useState(false);
     const [shouldShowAddCardOption, setShouldShowAddCardOption] = useState(false);
     const [newCardContent, setNewCardContent] = useState("");
+    const [isAddingCard, setIsAddingCard] = useState(false);
 
 
     const buttonRef = useRef(null);
@@ -57,10 +58,23 @@ const ContextMenu = ({ isListItem = false, isList = false, isBoard = false, item
     const handleItemDeleteAction = async (url) => {
         if (!item) return;
         await serverAxiosInstance.delete(`${url}${item.id}`).then((res) => {
-            console.log("Task deleted successfully", res.data);
+            // console.log("Task deleted successfully", res.data);
+            toast.success("Task deleted successfully!", {
+                duration: 2000,
+                cancel: {
+                    label: "Dismiss"
+                }
+            });
         }).catch((err) => {
-            console.error("Failed to delete task", err);
+            // console.error("Failed to delete task", err);
+            toast.error("Failed to delete task!", {
+                duration: 2000,
+                cancel: {
+                    label: "Dismiss"
+                }
+            });
         }).finally(() => {
+            setIsMenuOpen(false);
             setIsMenuOpen(false);
         });
 
@@ -73,28 +87,55 @@ const ContextMenu = ({ isListItem = false, isList = false, isBoard = false, item
         serverAxiosInstance.put(`/task/${item?.id}`, {
             dueComplete: val
         }).then((res) => {
-            console.log("Task marked as complete", res.data);
+            // console.log("Task marked as complete", res.data);
+            toast.success(`Task marked as ${val ? "complete" : "incomplete"}!`, {
+                duration: 2000,
+                cancel: {
+                    label: "Dismiss"
+                }
+            });
         }).catch((err) => {
-            console.error("Failed to mark task as complete", err);
+            // console.error("Failed to mark task as complete", err);
+            toast.error("Failed to mark task as complete!", {
+                duration: 2000,
+                cancel: {
+                    label: "Dismiss"
+                }
+            });
         }).finally(() => {
             setIsCompletionProcessing(false);
+            setIsMenuOpen(false);
         });
     }
 
     const handleAddCardToList = async () => {
         if (!item) return;
-        console.log("Adding card to list:", item.id, "with content:", newCardContent);
+        setIsAddingCard(true);
         serverAxiosInstance.post(`/tasks`, {
             name: newCardContent,
             listId: item.id,
             desc: ""
         }).then((res) => {
-            console.log("Card added successfully to list:", res.data);
+            // console.log("Card added successfully to list:", res.data);
+            toast.success("Card added successfully!", {
+                duration: 2000,
+                cancel: {
+                    label: "Dismiss"
+                }
+            });
         }).catch((err) => {
-            console.error("Failed to add card to list:", err);
+            // console.error("Failed to add card to list:", err);
+            toast.error("Failed to add card to list!", {
+                duration: 2000,
+                cancel: {
+                    label: "Dismiss"
+                }
+            });
         }).finally(() => {
             setNewCardContent("");
             setShouldShowAddCardOption(false);
+            setIsAddingCard(false);
+            setIsMenuOpen(false);
         })
     }
 
@@ -149,9 +190,14 @@ const ContextMenu = ({ isListItem = false, isList = false, isBoard = false, item
                                     <button className="context-menu-item" onClick={() => {
                                         handleMarkAsCompleteAction(item?.dueComplete ? false : true);
                                     }}>
-                                        <span>
-                                            <PencilIcon />
-                                        </span>
+                                        {
+                                            isCompletionProcessing ?
+                                                <Spinner classes={"place-self-center border-black h-6 w-6"} />
+                                                :
+                                                <span>
+                                                    <PencilIcon />
+                                                </span>
+                                        }
                                         <span>
                                             {
                                                 item?.dueComplete ? "Mark as Incomplete" : "Mark as Complete"
@@ -200,14 +246,23 @@ const ContextMenu = ({ isListItem = false, isList = false, isBoard = false, item
             }
             {
                 shouldShowAddCardOption &&
-                <div className={`absolute top-10 right-0 z-20 bg-white text-black shadow-lg rounded-md p-4 h-80 w-50 grid grid-rows-[1fr_3fr_1fr]`} ref={addCardRef}>
+                <div className={`absolute top-10 right-0 z-20 bg-white text-black shadow-lg rounded-md p-4 h-60 w-50 grid grid-rows-[1fr_3fr_1fr] gap-2`} ref={addCardRef}>
                     <h3 className="font-semibold mb-2 text-lg self-center pl-4">Add New Card</h3>
-                    <textarea className="w-full h-full p-2 border border-gray-300 rounded-md resize-none" value={newCardContent} placeholder="Enter card details..." onChange={(e) => { setNewCardContent(e.target.value) }}></textarea>
-                    <div className="mt-2 grid grid-cols-2 gap-2 justify-end self-center">
-                        <button className="py-1 px-2 bg-red-600 text-white rounded-md" onClick={() => setShouldShowAddCardOption(false)}>Cancel</button>
+                    <textarea className="w-full h-full p-2 border border-gray-700 rounded-md resize-none " value={newCardContent} placeholder="Enter card details..." onChange={(e) => { setNewCardContent(e.target.value) }}></textarea>
+                    <div className="grid grid-cols-2 gap-2 justify-end self-center">
+                        <button className="py-1 px-2 bg-red-600 text-white rounded-md" onClick={() => setShouldShowAddCardOption(false)}>
+                            Cancel
+                        </button>
                         <button className="px-2 py-1 bg-green-600 text-white rounded-md" onClick={() => {
                             handleAddCardToList();
-                        }}>Add Card</button>
+                        }}>
+                            {isAddingCard ?
+                                <Spinner classes={"place-self-center h-8 border-white"} /> :
+                                <span>
+                                    Add Card
+                                </span>
+                            }
+                        </button>
                     </div>
                 </div>
             }

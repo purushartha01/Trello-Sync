@@ -3,6 +3,7 @@ import { AddCardIcon } from "../utility/Icons"
 import { useRef } from "react";
 import { useEffect } from "react";
 import { serverAxiosInstance } from "../utility/axiosConfig";
+import { toast } from 'sonner';
 
 const AddListWidget = ({ boardId }) => {
 
@@ -17,13 +18,32 @@ const AddListWidget = ({ boardId }) => {
   const handleCardCreation = async () => {
     if (!boardId || !newCardTitle.trim()) {
       console.error("Board ID or List Title is missing.");
+      toast.error("Board ID or List Title is missing.", {
+        duration: 4000,
+        cancel: {
+          label: "Dismiss"
+        }
+      });
       return;
     }
     setIsCardCreating(true);
     serverAxiosInstance.post("/lists", { boardId: boardId, name: newCardTitle }).then((res) => {
-      console.log("New list created:", res.data);
+      // console.log("New list created:", res.data);
+      toast.success("New list created successfully!", {
+        duration: 4000,
+        cancel: {
+          label: "Dismiss"
+        }
+      });
+      // Optionally, you can trigger a refresh or update the state to reflect the new list
     }).catch((err) => {
       console.error("Error creating new list:", err);
+      toast.error("Error creating new list. Please try again.", {
+        duration: 4000,
+        cancel: {
+          label: "Dismiss"
+        }
+      });
     }).finally(() => {
       setNewCardTitle("");
       setIsCardCreating(false);

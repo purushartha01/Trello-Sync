@@ -1,4 +1,3 @@
-import React from "react";
 import { useRef } from "react";
 import ContextMenu from "./ContextMenu";
 import { CheckIcon, TickIcon } from "../utility/Icons";
@@ -6,7 +5,7 @@ import { useEffect } from "react";
 import { useState } from "react";
 import { serverAxiosInstance } from "../utility/axiosConfig";
 import { Spinner } from "./Widgets";
-import useSocket from "../hooks/useSocket";
+import { toast } from 'sonner';
 
 
 const TaskList = ({ cardList }) => {
@@ -52,9 +51,21 @@ const TaskList = ({ cardList }) => {
     serverAxiosInstance.put(`/tasks/${editableId}`, {
       name: editedName,
     }).then((res) => {
-      console.log("Task edited successfully", res.data);
+      // console.log("Task edited successfully", res.data);
+      toast.success("Task edited successfully", {
+        duration: 3000,
+        cancel: {
+          label: 'Dismiss'
+        }
+      });
     }).catch((err) => {
-      console.error("Failed to edit task", err);
+      // console.error("Failed to edit task", err);
+      toast.error("Failed to edit task", {
+        duration: 3000,
+        cancel: {
+          label: 'Dismiss'
+        }
+      });
     }).finally(() => {
       setIsEditReqProcessing(false);
       itemRefs.current.forEach(ref => {
@@ -74,36 +85,37 @@ const TaskList = ({ cardList }) => {
   return (
     <ul className="h-full w-full flex flex-col gap-2">
       {
-        cardList?.map((card, index) => {
-          if (card.cardRole === "link") {
-            return <li key={card?.id} className="list-card relative" title={card?.name}>
-              {card?.dueComplete ? <CheckIcon className="text-green-600" /> : null}
-              <a href={card?.name} className="px-2" data-id={card?.id} target="_blank" rel="noopener noreferrer" ref={(el) => itemRefs.current[index] = el}>{card?.name}</a>
-              {(isEditing && editableId === card?.id) && <button tabIndex={0} className={`bg-blue-600 absolute confirm-btn`} onClick={handleEditConfirmation}>
-                {
-                  editReqProcessing ? (
-                    <Spinner classes="text-white" />
-                  ) : (
+        cardList.length === 0 ? <p className="text-center text-blue-200">No tasks added</p> :
+          cardList?.map((card, index) => {
+            if (card.cardRole === "link") {
+              return <li key={card?.id} className="list-card relative" title={card?.name}>
+                {card?.dueComplete ? <CheckIcon className="text-green-600" /> : null}
+                <a href={card?.name} className="px-2" data-id={card?.id} target="_blank" rel="noopener noreferrer" ref={(el) => itemRefs.current[index] = el}>{card?.name}</a>
+                {(isEditing && editableId === card?.id) && <button tabIndex={0} className={`bg-blue-600 absolute confirm-btn`} onClick={handleEditConfirmation}>
+                  {
+                    editReqProcessing ? (
+                      <Spinner classes="border-white h-8" />
+                    ) : (
 
-                    <TickIcon className="text-white" />
-                  )
-                }
-              </button>}
-              <ContextMenu isListItem={true} itemRef={itemRefs.current[index]} item={card} onEdit={(ref) => handleEditStart(ref)} />
-            </li>
-          }
-          return (
-            <li key={card?.id} className="list-card relative" title={card?.name}>
-              {card?.dueComplete ? <CheckIcon className="text-green-600" /> : null}
-              <p className="px-2" data-id={card?.id} ref={(el) => itemRefs.current[index] = el}>{card?.name}</p>
-              {
-                (isEditing && editableId === card?.id) && <button tabIndex={0} className={`bg-blue-600 absolute confirm-btn`} onClick={handleEditConfirmation}>
-                  <TickIcon className="text-white" />
+                      <TickIcon className="text-white" />
+                    )
+                  }
                 </button>}
-              <ContextMenu isListItem={true} itemRef={itemRefs.current[index]} item={card} onEdit={(ref, id) => handleEditStart(ref, id)} />
-            </li>
-          )
-        })
+                <ContextMenu isListItem={true} itemRef={itemRefs.current[index]} item={card} onEdit={(ref) => handleEditStart(ref)} />
+              </li>
+            }
+            return (
+              <li key={card?.id} className="list-card relative" title={card?.name}>
+                {card?.dueComplete ? <CheckIcon className="text-green-600" /> : null}
+                <p className="px-2" data-id={card?.id} ref={(el) => itemRefs.current[index] = el}>{card?.name}</p>
+                {
+                  (isEditing && editableId === card?.id) && <button tabIndex={0} className={`bg-blue-600 absolute confirm-btn`} onClick={handleEditConfirmation}>
+                    <TickIcon className="text-white" />
+                  </button>}
+                <ContextMenu isListItem={true} itemRef={itemRefs.current[index]} item={card} onEdit={(ref, id) => handleEditStart(ref, id)} />
+              </li>
+            )
+          })
       }
     </ul>
   )
