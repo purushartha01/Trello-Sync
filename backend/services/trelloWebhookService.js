@@ -24,7 +24,7 @@ const getBoards = async (authParams) => {
     if (!response.status.toString().startsWith('2')) {
         throw new Error(`Failed to fetch boards from Trello. Status: ${response.status}`);
     }
-    const result= await response.json();
+    const result = await response.json();
     return result;
 }
 
@@ -53,7 +53,7 @@ const deleteWebhook = async (webhookId) => {
         method: 'DELETE'
     });
 
-    if(response.status === 404) {
+    if (response.status === 404) {
         console.log(`Webhook with ID ${webhookId} not found on Trello. It might have been already deleted.`);
         return [];
     }
@@ -84,9 +84,84 @@ const fetchAllWebhooks = async () => {
     return result;
 }
 
+// trelloEventMapper.js
+// const mapTrelloActionToSocket = (io, action) => {
+//     const { type, data } = action;
+
+//     console.log("Mapping Trello action to socket event:", action);
+
+//     switch (type) {
+//         // Card Created
+//         case "createCard":
+//             io.emit("card:created", {
+//                 card: data.card,
+//                 listId: data.list?.id,
+//                 boardId: data.board?.id
+//             });
+//             break;
+
+//         // Card Updated (Title, Desc, Due, Position)
+//         case "updateCard":
+//             // Moved between lists
+//             if (data.listBefore && data.listAfter) {
+//                 io.emit("card:moved", {
+//                     cardId: data.card.id,
+//                     fromList: data.listBefore.id,
+//                     toList: data.listAfter.id
+//                 });
+//                 break;
+//             }
+
+//             // Archived or Unarchived
+//             if (data.old?.closed !== undefined) {
+//                 io.emit("card:archived", {
+//                     cardId: data.card.id,
+//                     isArchived: data.card.closed
+//                 });
+//                 break;
+//             }
+
+//             // General update (title, desc, etc.)
+//             io.emit("card:updated", {
+//                 card: data.card
+//             });
+//             break;
+
+//         // Card Deleted
+//         case "deleteCard":
+//             io.emit("card:deleted", {
+//                 cardId: data.card.id
+//             });
+//             break;
+
+//         // List Created
+//         case "createList":
+//             io.emit("list:created", {
+//                 list: data.list,
+//                 boardId: data.board?.id
+//             });
+//             break;
+
+//         // List Renamed
+//         case "updateList":
+//             // Only keep name change logic
+//             if (data.old?.name !== undefined) {
+//                 io.emit("list:updated", {
+//                     listId: data.list.id,
+//                     name: data.list.name
+//                 });
+//             }
+//             break;
+//         default:
+//             io.emit("trello:webhookEvent", { action, model: action.model });
+//             break;
+//     }
+// }
+
 module.exports = {
     getBoards,
     createWebhook,
     deleteWebhook,
-    fetchAllWebhooks
+    fetchAllWebhooks,
+    // mapTrelloActionToSocket
 }

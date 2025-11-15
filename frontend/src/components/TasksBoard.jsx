@@ -1,34 +1,71 @@
-import { useEffect, useState } from "react"
+import { useCallback, useContext, useEffect, useState } from "react"
 import { serverAxiosInstance } from "./../utility/axiosConfig.js";
 import ChangeBoardWidget from "./ChangeBoardWidget.jsx";
 import ChangeViewWidget from './ChangeViewWidget';
 import ListCard from "./ListCard.jsx";
 import AddBoardWidget from "./AddBoardWidget.jsx";
 import AddListWidget from "./AddListWidget.jsx";
+import useSocket from './../hooks/useSocket';
+import { DataContext } from "../context/DataContext.jsx";
+import { handleBoardLevelEvents, handleCardLevelEvents, handleListLevelEvents } from "../utility/webSocketEventsManager.js";
 
 
 
 const TasksBoard = () => {
     const [isLoading, setIsLoading] = useState(false);
-    const [userBoards, setUserBoards] = useState([]);
-    const [currentBoard, setCurrentBoard] = useState(userBoards[0] || {});
 
+    const { boards, cards, updateCards, updateBoards, currentBoard: contextCurrentBoard, updateCurrentBoard: contextUpdateCurrentBoard, currentBoardDetails, listsForBoard } = useContext(DataContext);
 
     const updateCurrentBoard = (boardId) => {
-        const selectedBoard = userBoards.filter((board) => {
+        const selectedBoard = boards.filter((board) => {
             return board.id === boardId
         });
-        setCurrentBoard(selectedBoard[0] || {});
+        console.log("Switching to board:", selectedBoard[0]?.id);
+        contextUpdateCurrentBoard(selectedBoard[0]?.id || "");
     }
+
+    useSocket("trello:webhookEvent", ({ action, model }) => {
+        console.log("Received webhook event via socket:", { action, model });
+        if (action?.type.endsWith("Board")) {
+            const updatedBoards = handleBoardLevelEvents(action.type, boards, model);
+            if (updatedBoards) {
+                updateBoards(updatedBoards);
+            } else {
+                contextUpdateCurrentBoard(contextCurrentBoard);
+            }
+        }
+        if (action?.type.endsWith("List")) {
+            const updatedBoards = handleListLevelEvents(action.type, boards, { boardId: model.id, newList: { ...action?.data?.list, isBoard: model.id } });
+            console.log("Updated boards after list level event:", updatedBoards);
+            if (updatedBoards) {
+                updateBoards(updatedBoards);
+            }
+        }
+        if (action?.type.endsWith("Card")) {
+            console.log("Handling card level event:", cards);
+            // const updatedCards = handleCardLevelEvents(action.type, cards, { boardId: model.id, listId: action?.data?.list.id, card: action?.data?.card });
+            const updatedCards = handleCardLevelEvents(action.type, cards, { boardId: model.id, listId: action?.data?.list.id, card: action?.data?.card });
+            console.log("Updated boards after card level event:", updatedCards);
+            if (updatedCards) {
+                updateCards(updatedCards);
+            }
+
+        }
+    });
 
     useEffect(() => {
         const fetchUserBoards = async () => {
             setIsLoading(true);
             serverAxiosInstance.get("/boards")
                 .then((res) => {
-                    console.log("Fetched user boards:", res.data);
-                    setUserBoards(res.data.userBoards);
-                    setCurrentBoard(res.data.userBoards[0] || {});
+                    updateBoards(res.data.userBoards);
+                    if (!contextCurrentBoard || contextCurrentBoard === "" || res.data.userBoards?.filter(
+                        (b) => {
+                            return contextCurrentBoard === b.id;
+                        }
+                    ).length <= 0) {
+                        contextUpdateCurrentBoard(res.data.userBoards[0]?.id || "");
+                    }
                 })
                 .catch((err) => {
                     console.error("Error fetching user boards:", err);
@@ -37,27 +74,28 @@ const TasksBoard = () => {
                 });
         }
         fetchUserBoards();
-    }, []);
+    }, [updateBoards, contextUpdateCurrentBoard, contextCurrentBoard]);
 
     return (
         <div className="board-container">
             <div className="tool-bar">
-                <h1 className="text-lg self-center px-4">{currentBoard?.name}</h1>
+                <h1 className="text-xl self-center px-4 font-semibold">{currentBoardDetails?.name}</h1>
                 <div className="action-container">
-                    <ChangeBoardWidget userBoards={userBoards} updateCurrentBoard={updateCurrentBoard} />
+                    <ChangeBoardWidget userBoards={boards} updateCurrentBoard={updateCurrentBoard} />
                     <AddBoardWidget />
-                    <ChangeViewWidget />
+                    {/* TODO: Still not added the view switcher */}
+                    {/* <ChangeViewWidget /> */}
                 </div>
             </div>
             <div className="tasks-container">
                 {isLoading ? (<div></div>)
-                    : (userBoards.length === 0 ? <div>No boards available.</div> : currentBoard?.lists?.map((list) => {
+                    : (listsForBoard?.length === 0 ? <div>No lists available.</div> : listsForBoard?.map((list) => {
                         {/* Tasks will be rendered here */ }
                         return (
                             <ListCard list={list} key={list?.id} />
                         );
                     }))}
-                <AddListWidget boardId={currentBoard?.id} />
+                <AddListWidget boardId={contextCurrentBoard} />
             </div>
         </div>
     )

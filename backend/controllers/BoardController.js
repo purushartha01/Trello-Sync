@@ -44,6 +44,29 @@ const fetchBoards = async (req, res, next) => {
     }
 }
 
+const fetchBoardById = async (req, res, next) => {
+    try {
+        const { boardId } = req.params;
+        const response = await fetch(`https://api.trello.com/1/boards/${boardId}?key=${Atlassian_API_Key}&token=${TrelloAPIToken}`, {
+            method: 'GET',
+            headers: {
+                'accept': 'application/json'
+            }
+        });
+
+        if (response.status !== 200) {
+            res.locals.statusCode = response.status;
+            throw new Error("Failed to fetch board from Trello");
+        }
+
+        const result = await response.json();
+        res.status(200).json({ result: result });
+
+    } catch (err) {
+        next(err);
+    }
+}
+
 const createList = async (req, res, next) => {
     try {
         const { boardId, name } = req.body;
@@ -223,10 +246,11 @@ const markTaskComplete = async (req, res, next) => {
 module.exports = {
     createBoard,
     fetchBoards,
+    fetchBoardById,
     createList,
     addTask,
     updateTask,
     deleteTask,
     getTaskCards,
-    markTaskComplete
+    markTaskComplete,
 }

@@ -1,33 +1,42 @@
-import { useEffect, useState } from "react"
+import { useContext, useEffect, useMemo, useState } from "react"
 import { serverAxiosInstance } from "../utility/axiosConfig";
 import TaskList from "./TaskList";
 import ContextMenu from "./ContextMenu";
 import { useRef } from "react";
-
+import { DataContext } from "../context/DataContext";
 
 const ListCard = ({ list }) => {
 
-    const [cardList, setCardList] = useState([]);
 
     const listRef = useRef();
 
+    const { cards, addCards, currentBoard } = useContext(DataContext);
+
+    const cardsRef = useRef({});
+
     useEffect(() => {
-        if (!list.id) {
-            return;
-        }
+        if (!list?.id || !currentBoard) return;
 
-        const fetchCardsList = async () => {
-            serverAxiosInstance.get(`/lists/${list.id}`).then((res) => {
-                setCardList(res.data.result || []);
+        if (cardsRef.current[currentBoard]?.[list.id]?.length > 0) return; // Cards already fetched
+
+        const fetchCards = async () => {
+            try {
+                const res = await serverAxiosInstance.get(`/lists/${list.id}`);
                 console.log("Fetched cards for list:", res.data.result);
-            }).catch((err) => {
-                console.error("Error fetching cards for list:", err);
-            });
-        }
-
-        fetchCardsList();
-
-    }, [list.id]);
+                addCards(currentBoard, list.id, res.data.result);
+                cardsRef.current = {
+                    ...cardsRef.current,
+                    [currentBoard]: {
+                        ...(cardsRef.current[currentBoard] || {}),
+                        [list.id]: [...res.data.result]
+                    }
+                };
+            } catch (err) {
+                console.error("Error fetching cards:", err);
+            }
+        };
+        fetchCards();
+    }, [addCards, currentBoard, list.id]);
 
     // TODO: Add link preview feature for card
     useEffect(() => { }, []);
@@ -40,7 +49,7 @@ const ListCard = ({ list }) => {
                 <ContextMenu isList={true} item={list} itemRef={listRef.current} onEdit={() => { }} />
             </div>
             <div className="list-content">
-                <TaskList cardList={cardList} />
+                <TaskList cardList={cards[currentBoard]?.[list.id] || []} />
             </div>
         </div>
     )

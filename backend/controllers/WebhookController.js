@@ -1,5 +1,5 @@
 const { Atlassian_API_Key, callbackUrl, Atlassian_Secret_Key, TrelloAPIToken } = require('../config/serverConfig');
-const { getBoards, fetchAllWebhooks, createWebhook, deleteWebhook } = require('../services/trelloWebhookService');
+const { getBoards, fetchAllWebhooks, createWebhook, deleteWebhook, mapTrelloActionToSocket } = require('../services/trelloWebhookService');
 const { getIO } = require('../socket');
 const store = require('./../storage/webhookStore');
 const crypto = require('crypto');
@@ -82,6 +82,8 @@ const handleWebhookEvent = (req, res, next) => {
         const rawBody = req.body;
         const signature = req.get("X-Trello-Webhook") || req.get("x-trello-webhook");
 
+        console.log("Received Trello webhook event", rawBody);
+
         if (!signature) {
             console.log("Missing Trello webhook signature");
             res.locals.statusCode = 400;
@@ -90,7 +92,7 @@ const handleWebhookEvent = (req, res, next) => {
 
         const hmac = crypto.createHmac("sha1", Atlassian_Secret_Key);
         // if validation of expected signature===signature fails try parsing the raw body as string
-        hmac.update(rawBody);
+        hmac.update(JSON.stringify(rawBody));
         hmac.update(callbackUrl);
 
         const expectedSignature = hmac.digest("base64");
@@ -101,7 +103,7 @@ const handleWebhookEvent = (req, res, next) => {
             throw new Error("Invalid Trello webhook signature.");
         }
 
-        const payload = JSON.parse(rawBody.toString("utf8"));
+        const payload = JSON.parse(JSON.stringify(rawBody));
 
         const actionId = payload?.action?.id;
         if (actionId) {
@@ -112,9 +114,9 @@ const handleWebhookEvent = (req, res, next) => {
                 scheduleActionCleanup(actionId);
             }
         }
-
         try {
             const io = getIO();
+            console.log("Emitting webhook event via socket:", { action: payload.action, model: payload.model });
             io.emit("trello:webhookEvent", { action: payload.action, model: payload.model });
         } catch (err) {
             console.log("Error emitting webhook event via socket:", err);

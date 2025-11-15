@@ -1,11 +1,14 @@
 const express = require('express');
-const { fetchBoards, createBoard, addTask, updateTask, deleteTask, getTaskCards, createList, markTaskComplete } = require('../controllers/BoardController');
+const { fetchBoards, createBoard, addTask, updateTask, deleteTask, getTaskCards, createList, markTaskComplete, fetchBoardById } = require('../controllers/BoardController');
 
 const BoardRoutes = express.Router();
 
 BoardRoutes.route("/boards")
     .get(fetchBoards)
     .post(createBoard);
+
+BoardRoutes.route("/boards/:boardId")
+    .get(fetchBoardById);
 
 BoardRoutes.route("/tasks")
     .post(addTask);
